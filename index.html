@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafik odbioru prób z chłodni — PIW Słupsk</title>
+<style>
+  :root{
+    --paper:#eef1ef;--raised:#fff;--ink:#1f2d3d;--ink2:#5c6b7a;--line:#c9d2d6;
+    --teal:#0f6e64;--teal2:#0a4f47;--amber:#b45309;--amberbg:#fdf1e3;
+    --blue:#2563eb;--bluebg:#eff6ff;
+    --mono:'JetBrains Mono','Courier New',monospace;
+    --serif:'Spectral',Georgia,serif;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);padding:20px 16px 80px;}
+  .wrap{max-width:960px;margin:0 auto;}
+  .app-header{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;}
+  .app-header h1{font-family:var(--serif);font-size:22px;margin:0 0 2px;}
+  .app-header p{margin:0;font-size:12px;color:var(--ink2);font-family:var(--mono);letter-spacing:.3px;}
+  .stamp{font-family:var(--mono);font-size:10px;border:1.5px solid var(--teal);color:var(--teal2);padding:4px 9px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+
+  .login-screen{max-width:420px;margin:50px auto;text-align:center;}
+  .login-screen h2{font-family:var(--serif);font-size:20px;margin-bottom:6px;}
+  .login-screen p{font-size:13px;color:var(--ink2);margin-bottom:24px;}
+  .login-card{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:24px;margin-bottom:16px;text-align:left;}
+  .login-card h3{font-family:var(--serif);font-size:15px;margin:0 0 4px;color:var(--teal2);}
+  .login-card .sub{font-size:12px;color:var(--ink2);margin:0 0 14px;}
+  .login-card .row{display:flex;gap:8px;align-items:end;margin-bottom:10px;}
+  .login-card .row > *{flex:1;}
+  .login-err{color:#a33;font-size:12px;margin-top:4px;min-height:16px;}
+  .role-badge{display:inline-block;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px;}
+  .role-badge.coord{background:var(--teal);color:#fff;}
+  .role-badge.driver{background:var(--bluebg);color:var(--blue);border:1px solid var(--blue);}
+
+  .tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--ink);}
+  .tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--ink2);font-family:var(--sans);position:relative;}
+  .tab.active{color:var(--ink);}
+  .tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--teal);}
+  .tab:hover{color:var(--ink);}
+  .panel{display:none;}.panel.active{display:block;}
+
+  .card{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:16px;}
+  .card h2{font-family:var(--serif);font-size:15px;margin:0 0 12px;color:var(--teal2);}
+  label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);display:block;margin-bottom:3px;font-family:var(--mono);}
+  input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:4px;font-size:13px;font-family:var(--sans);background:#fff;color:var(--ink);}
+  input:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+  .form-row{display:grid;gap:10px;margin-bottom:10px;}
+  .form-row.c2{grid-template-columns:1fr 1fr;}
+  .form-row.c3{grid-template-columns:1fr 1fr auto;}
+
+  .btn{background:var(--teal);color:#fff;border:none;padding:8px 15px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);}
+  .btn:hover{background:var(--teal2);}
+  .btn.sec{background:transparent;color:var(--teal2);border:1.5px solid var(--teal);}
+  .btn.sec:hover{background:#e8f3f1;}
+  .btn.sm{font-size:11px;padding:5px 10px;}
+  .btn.del{background:transparent;color:#a33;border:1px solid #d99;font-size:11px;padding:4px 9px;}
+  .btn.del:hover{background:#fbeaea;}
+  .btn.share{background:var(--blue);font-size:13px;}
+  .btn.share:hover{background:#1d4ed8;}
+
+  .rdot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .rname{font-weight:700;font-size:14px;}
+  .stop-list{list-style:none;margin:6px 0 0;padding:0;}
+  .stop-list li{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .stop-list li:last-child{border-bottom:none;}
+  .stop-num{font-family:var(--mono);color:#fff;background:var(--ink2);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
+  .chtag{font-family:var(--mono);background:var(--teal2);color:#fff;padding:1px 6px;border-radius:3px;font-size:10px;white-space:nowrap;}
+  .stop-miejsc{font-weight:600;}
+  .stop-note{color:var(--ink2);font-size:11px;}
+  .stop-order-btn{background:none;border:1px solid var(--line);border-radius:3px;color:var(--ink2);cursor:pointer;font-size:10px;padding:1px 4px;line-height:1.4;}
+  .stop-order-btn:hover{background:var(--line);}
+  .stop-edit-row{display:none;grid-template-columns:1fr 1.4fr 60px auto;gap:6px;padding:4px 0;align-items:center;}
+  .stop-edit-row.open{display:grid;}
+  .stop-view-row{display:flex;align-items:center;gap:6px;flex:1;}
+
+  .week-nav{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .week-label{font-family:var(--mono);font-size:13px;font-weight:700;}
+  .assign-card{border:1px solid var(--line);border-radius:5px;padding:12px;margin-bottom:10px;border-left:4px solid var(--teal);}
+  .assign-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .assign-stops-summary{font-size:11px;color:var(--ink2);font-family:var(--mono);margin-bottom:6px;}
+  .assigned-tag{font-size:12px;font-weight:600;padding:4px 10px;background:var(--bluebg);border:1px solid var(--blue);border-radius:4px;color:var(--blue);}
+
+  .my-route{border:1px solid var(--line);border-radius:5px;padding:14px;margin-bottom:12px;border-left:4px solid var(--teal);}
+  .my-route .day{font-family:var(--mono);font-weight:700;font-size:13px;margin-bottom:4px;}
+  .nothing{text-align:center;color:var(--ink2);font-family:var(--mono);font-size:12px;padding:30px 10px;}
+  .user-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--raised);border:1px solid var(--line);border-radius:6px;flex-wrap:wrap;}
+  .user-bar .name{font-weight:700;}
+
+  .share-box{background:var(--bluebg);border:1px solid var(--blue);border-radius:6px;padding:16px;margin-bottom:16px;}
+  .share-box h3{font-family:var(--serif);font-size:14px;color:var(--blue);margin:0 0 8px;}
+  .share-box p{font-size:12px;color:var(--ink2);margin:0 0 10px;}
+  .share-box textarea{font-size:12px;font-family:var(--mono);min-height:120px;background:#fff;}
+
+  @media(max-width:600px){
+    .form-row.c3{grid-template-columns:1fr;}
+    .tabs{overflow-x:auto;}
+  }
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:5px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;}
+  .toast.show{opacity:1;}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <div>
+      <h1>Grafik odbioru prób z chłodni</h1>
+      <p>Powiatowy Inspektorat Weterynarii w Słupsku</p>
+    </div>
+    <div class="stamp" id="syncState">✓</div>
+  </header>
+
+  <!-- LOGIN -->
+  <div id="loginScreen" class="login-screen">
+    <h2>Zaloguj się</h2>
+    <p>Wybierz swoją rolę.</p>
+    <div class="login-card">
+      <h3>Kierowca</h3>
+      <p class="sub">Widzisz swój plan na tydzień.</p>
+      <div class="row">
+        <div><label>Twoje imię</label><select id="login-driver-name"></select></div>
+        <div style="flex:0;"><label>&nbsp;</label><button class="btn" onclick="loginAsDriver()">Wejdź</button></div>
+      </div>
+    </div>
+    <div class="login-card">
+      <h3>Koordynator</h3>
+      <p class="sub">Edytujesz trasy i przypisujesz kierowców.</p>
+      <div class="row">
+        <div><label>PIN</label><input type="password" id="login-pin" placeholder="np. 1234" maxlength="8" onkeydown="if(event.key==='Enter') loginAsCoord();"></div>
+        <div style="flex:0;"><label>&nbsp;</label><button class="btn" onclick="loginAsCoord()">Wejdź</button></div>
+      </div>
+      <div class="login-err" id="pinError"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" class="hidden">
+    <div class="user-bar">
+      <span class="name" id="userName"></span>
+      <span class="role-badge" id="userBadge"></span>
+      <span style="flex:1;"></span>
+      <button class="btn sm sec" onclick="logout()">Zmień osobę</button>
+    </div>
+    <div class="tabs" id="tabBar"></div>
+
+    <!-- Mój plan -->
+    <div class="panel" id="panel-plan">
+      <div class="card">
+        <h2>Twój plan na tydzień</h2>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:end;">
+          <div style="flex:1;min-width:140px;"><label for="my-week">Tydzień od</label><input type="date" id="my-week" onchange="renderMyPlan()"></div>
+          <div><button class="btn sm sec" onclick="shiftMyWeek(-1)">← poprz.</button></div>
+          <div><button class="btn sm sec" onclick="shiftMyWeek(1)">nast. →</button></div>
+        </div>
+        <div id="myPlanList"></div>
+      </div>
+    </div>
+
+    <!-- Grafik tygodnia -->
+    <div class="panel" id="panel-grafik">
+      <div class="card">
+        <h2>Przypisania na tydzień</h2>
+        <div class="week-nav">
+          <button class="btn sm sec" onclick="shiftWeek(-1)">← poprz.</button>
+          <span class="week-label" id="weekLabel"></span>
+          <button class="btn sm sec" onclick="shiftWeek(1)">nast. →</button>
+          <button class="btn sm" onclick="goThisWeek()">dziś</button>
+          <button class="btn sm sec" onclick="copyWeek()" title="Kopiuj przypisania z poprzedniego tygodnia">📋 kopiuj z poprz. tyg.</button>
+        </div>
+        <div id="assignList"></div>
+      </div>
+      <div class="share-box">
+        <h3>📤 Wyślij plan kierowcom</h3>
+        <p>Kliknij „Generuj", skopiuj tekst i wklej na grupę WhatsApp, SMS albo e-mail. Kierowcy nie muszą nic instalować.</p>
+        <button class="btn share" onclick="generateShareText()">Generuj plan na ten tydzień</button>
+        <textarea id="shareText" class="hidden" readonly></textarea>
+        <button id="copyShareBtn" class="btn sm sec hidden" style="margin-top:8px;" onclick="copyShareText()">Kopiuj do schowka</button>
+      </div>
+    </div>
+
+    <!-- Trasy i punkty -->
+    <div class="panel" id="panel-trasy">
+      <div class="card">
+        <h2>Stałe trasy i ich punkty odbioru</h2>
+        <p style="font-size:12px;color:var(--ink2);margin-top:0;">Zdefiniuj trasy i przypisane do nich chłodnie.</p>
+        <div id="routeDefs"></div>
+        <button class="btn sec sm" style="margin-top:10px;" onclick="addRouteDef()">+ dodaj nową trasę</button>
+      </div>
+    </div>
+
+    <!-- Ustawienia -->
+    <div class="panel" id="panel-config">
+      <div class="card">
+        <h2>Kierowcy</h2>
+        <div id="driverList"></div>
+        <button class="btn sec sm" style="margin-top:8px;" onclick="addDriver()">+ dodaj kierowcę</button>
+      </div>
+      <div class="card">
+        <h2>Auta służbowe</h2>
+        <div id="carList"></div>
+        <button class="btn sec sm" style="margin-top:8px;" onclick="addCar()">+ dodaj auto</button>
+      </div>
+      <div class="card">
+        <h2>Dni odbioru</h2>
+        <p style="font-size:12px;color:var(--ink2);margin:0 0 8px;">Zaznacz dni tygodnia, w które realizujecie odbiory.</p>
+        <div id="dayCheckboxes" style="display:flex;gap:14px;flex-wrap:wrap;"></div>
+      </div>
+      <div class="card">
+        <h2>Zmień PIN koordynatora</h2>
+        <div class="form-row c3">
+          <div><label>Nowy PIN</label><input type="password" id="newPin" maxlength="8" placeholder="min. 4 znaki"></div>
+          <div><label>Powtórz</label><input type="password" id="newPin2" maxlength="8"></div>
+          <div><label>&nbsp;</label><button class="btn sm" onclick="changePin()">Zmień</button></div>
+        </div>
+        <div class="login-err" id="pinChangeErr"></div>
+      </div>
+
+      <div class="card">
+        <h2>Kopia zapasowa / przeniesienie danych</h2>
+        <p style="font-size:12px;color:var(--ink2);margin:0 0 10px;">Użyj tego, żeby przenieść trasy, kierowców, auta i przypisania do innej wersji aplikacji (np. po wgraniu na GitHub Pages).</p>
+
+        <h3 style="font-family:var(--serif);font-size:13px;margin:0 0 6px;">Eksportuj</h3>
+        <p style="font-size:12px;color:var(--ink2);margin:0 0 8px;">Wygeneruj dane, skopiuj cały tekst i zapisz np. w notatniku.</p>
+        <button class="btn sm sec" onclick="exportData()">Generuj dane do eksportu</button>
+        <textarea id="exportBox" class="hidden" readonly style="margin-top:8px;font-family:var(--mono);font-size:11px;min-height:100px;"></textarea>
+        <button id="copyExportBtn" class="btn sm sec hidden" style="margin-top:6px;" onclick="copyExport()">Kopiuj do schowka</button>
+
+        <h3 style="font-family:var(--serif);font-size:13px;margin:18px 0 6px;">Importuj</h3>
+        <p style="font-size:12px;color:var(--ink2);margin:0 0 8px;">Wklej wcześniej wyeksportowane dane i zapisz — nadpisze obecny stan w tej aplikacji.</p>
+        <textarea id="importBox" placeholder="Wklej tu wyeksportowany tekst…" style="font-family:var(--mono);font-size:11px;min-height:100px;"></textarea>
+        <button class="btn sm" style="margin-top:6px;" onclick="importData()">Importuj i zapisz</button>
+        <div class="login-err" id="importErr"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBx5QKIwsKoUo-O8rB934GkphivvLsX0UY",
+    authDomain: "grafik-piw.firebaseapp.com",
+    projectId: "grafik-piw",
+    storageBucket: "grafik-piw.firebasestorage.app",
+    messagingSenderId: "985411579408",
+    appId: "1:985411579408:web:c2788dd85bdbb54d146495"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window._fbGet = async function(key) {
+    try {
+      const snap = await getDoc(doc(db, 'grafik', key));
+      return snap.exists() ? snap.data().value : null;
+    } catch(e) { return null; }
+  };
+
+  window._fbSet = async function(key, value) {
+    try {
+      await setDoc(doc(db, 'grafik', key), { value });
+      return true;
+    } catch(e) { return false; }
+  };
+
+  window._fbReady = true;
+  if(window._fbReadyCb) window._fbReadyCb();
+</script>
+
+<script>
+const COLORS=['#0f6e64','#7c3aed','#be185d','#b45309','#1d4ed8','#059669','#dc2626','#6d28d9'];
+const DAY_NAMES=['Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota','Niedziela'];
+const DAY_SHORT=['pn','wt','śr','cz','pt','so','nd'];
+
+let state={pin:'',drivers:[],cars:[],routes:[],assignments:[],activeDays:[0,1,2,3,4]};
+let session={role:null,name:''};
+let currentWeekStart=getMonday(new Date());
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function getMonday(d){const dt=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=dt.getDay();const diff=day===0?-6:1-day;dt.setDate(dt.getDate()+diff);return dt;}
+function addDays(d,n){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());r.setDate(r.getDate()+n);return r;}
+function isoDate(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
+function parseLocalDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d);}
+function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}.${m}.${y}`;}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* ========== STORAGE LAYER (Firebase + localStorage fallback) ========== */
+function waitForFb(cb) {
+  if(window._fbReady) cb();
+  else window._fbReadyCb = cb;
+}
+
+const storage = {
+  async get(key) {
+    return new Promise(resolve => {
+      waitForFb(async () => {
+        try {
+          const val = await window._fbGet(key);
+          if(val !== null) { resolve(val); return; }
+        } catch(e) {}
+        try { resolve(localStorage.getItem('piw_'+key)); } catch(e) { resolve(null); }
+      });
+    });
+  },
+  async set(key, value) {
+    return new Promise(resolve => {
+      waitForFb(async () => {
+        try { await window._fbSet(key, value); } catch(e) {}
+        try { localStorage.setItem('piw_'+key, value); } catch(e) {}
+        resolve();
+      });
+    });
+  }
+};
+
+async function loadState(){
+  try{
+    const raw=await storage.get('state');
+    if(raw) state={...state,...JSON.parse(raw)};
+    else{
+      state.drivers=[
+'Agata Łabenda',
+'Joanna Fir',
+'Klaudia Guzowska',
+'Jacek Machoń',
+'Żaneta Święty',
+'Magdalena Orlich'
+      ];
+      state.cars=[
+'Toyota',
+'Ford',
+'SsangYong',
+'Hyundai',
+'Isuzu'
+      ];
+      state.routes=[
+        {id:uid(),nazwa:'Łupawa - Stara Dąbrowa',color:'#0f6e64',przystanki:[
+          {id:uid(),numer:'CH2212001',miejscowosc:'Łupawa 12C',notatki:''},
+          {id:uid(),numer:'CH2212002',miejscowosc:'Łupawa 12C',notatki:''},
+          {id:uid(),numer:'CH2212003',miejscowosc:'Kolonia Stara Dąbrowa 39',notatki:''},
+          {id:uid(),numer:'CH2212004',miejscowosc:'Kolonia Stara Dąbrowa 39',notatki:''},
+          {id:uid(),numer:'CH2212010',miejscowosc:'Łysomiczki 1',notatki:''},
+          {id:uid(),numer:'CH2212011',miejscowosc:'Łysomiczki 1',notatki:''},
+          {id:uid(),numer:'CH2212012',miejscowosc:'Żarkowo, ul. Lipowa 1',notatki:''},
+          {id:uid(),numer:'CH2212019',miejscowosc:'Głobino, ul. Malinowa',notatki:''},
+          {id:uid(),numer:'CH2212015',miejscowosc:'Dargacz 1',notatki:''}
+        ]},
+        {id:uid(),nazwa:'Długa',color:'#7c3aed',przystanki:[
+          {id:uid(),numer:'CH2212005',miejscowosc:'Główczyce 3D',notatki:''},
+          {id:uid(),numer:'CH2212006',miejscowosc:'Pobłocie 15',notatki:''},
+          {id:uid(),numer:'CH2212007',miejscowosc:'Rzuszcze 33',notatki:''},
+          {id:uid(),numer:'CH2212008',miejscowosc:'Smołdzino 48/7',notatki:''},
+          {id:uid(),numer:'CH2212009',miejscowosc:'Skórzyno 18',notatki:''},
+          {id:uid(),numer:'CH2212024',miejscowosc:'Lubuczewo 19',notatki:''},
+          {id:uid(),numer:'CH2212026',miejscowosc:'Niewierowo 12',notatki:''},
+          {id:uid(),numer:'CH2212028',miejscowosc:'Żelkowo 20',notatki:''},
+          {id:uid(),numer:'CH2212031',miejscowosc:'Skórzyno 18',notatki:''},
+          {id:uid(),numer:'CH2212032',miejscowosc:'Objazda, ul. Lipowa 23H',notatki:''},
+          {id:uid(),numer:'CH2212013',miejscowosc:'Smołdzino 48/7',notatki:''}
+        ]},
+        {id:uid(),nazwa:'Kępice',color:'#be185d',przystanki:[
+          {id:uid(),numer:'CH2212014',miejscowosc:'Warcino 10',notatki:''},
+          {id:uid(),numer:'CH2212016',miejscowosc:'Kawka 4',notatki:''},
+          {id:uid(),numer:'CH2212017',miejscowosc:'Kawka 4',notatki:''},
+          {id:uid(),numer:'CH2212018',miejscowosc:'Zagórki 6',notatki:''},
+          {id:uid(),numer:'CH2212023',miejscowosc:'Kruszyna 29',notatki:''}
+        ]},
+        {id:uid(),nazwa:'Modła - Jaracza',color:'#b45309',przystanki:[
+          {id:uid(),numer:'CH2212020',miejscowosc:'Modła 8',notatki:''},
+          {id:uid(),numer:'CH2212021',miejscowosc:'Modła 13',notatki:''},
+          {id:uid(),numer:'CH2212025',miejscowosc:'Gałęzinowo, ul. Główna 38',notatki:''},
+          {id:uid(),numer:'CH2212030',miejscowosc:'Słupsk, ul. Jaracza 25A',notatki:''},
+          {id:uid(),numer:'CH2212022',miejscowosc:'Machowinko 21',notatki:''}
+        ]}
+      ];
+      state.pin='22122026';
+      state.activeDays=[0];
+    }
+  }catch(e){
+    state.drivers=[
+'Agata Łabenda',
+'Joanna Fir',
+'Klaudia Guzowska',
+'Jacek Machoń',
+'Żaneta Święty',
+'Magdalena Orlich'
+    ];
+    state.cars=[
+'Toyota',
+'Ford',
+'SsangYong',
+'Hyundai',
+'Isuzu'
+    ];
+  }
+  populateLoginDrivers();
+}
+async function saveState(){
+  await storage.set('state', JSON.stringify(state));
+}
+
+/* ========== LOGIN ========== */
+function populateLoginDrivers(){
+  const sel=document.getElementById('login-driver-name');
+  sel.innerHTML=state.drivers.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+}
+
+function loginAsDriver(){
+  const name=document.getElementById('login-driver-name').value;
+  if(!name)return;
+  session={role:'driver',name};
+  showApp();
+}
+
+function loginAsCoord(){
+  const pin=document.getElementById('login-pin').value;
+  const err=document.getElementById('pinError');
+  if(!state.pin){
+    if(pin.length<4){err.textContent='PIN musi mieć min. 4 znaki.';return;}
+    state.pin=pin; saveState();
+    session={role:'coord',name:'Koordynator'};
+    showApp();
+    showToast('PIN ustawiony! Zapamiętaj go.');
+  } else {
+    if(pin!==state.pin){err.textContent='Błędny PIN.';return;}
+    session={role:'coord',name:'Koordynator'};
+    showApp();
+  }
+}
+
+function logout(){
+  session={role:null,name:''};
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('login-pin').value='';
+  document.getElementById('pinError').textContent='';
+  populateLoginDrivers();
+}
+
+function showApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('userName').textContent=session.name;
+  const badge=document.getElementById('userBadge');
+  if(session.role==='coord'){badge.textContent='Koordynator';badge.className='role-badge coord';}
+  else{badge.textContent='Kierowca';badge.className='role-badge driver';}
+  buildTabs();
+  renderAll();
+}
+
+function buildTabs(){
+  const bar=document.getElementById('tabBar');
+  if(session.role==='coord'){
+    bar.innerHTML=`
+      <button class="tab active" onclick="switchTab('grafik',this)">Grafik tygodnia</button>
+      <button class="tab" onclick="switchTab('trasy',this)">Trasy i punkty</button>
+      <button class="tab" onclick="switchTab('config',this)">Ustawienia</button>`;
+    switchTab('grafik',bar.querySelector('.tab'));
+  } else {
+    bar.innerHTML=`<button class="tab active" onclick="switchTab('plan',this)">Mój plan</button>`;
+    switchTab('plan',bar.querySelector('.tab'));
+  }
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const panel=document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  renderAll();
+}
+
+function renderAll(){
+  if(session.role==='coord'){renderConfig();renderRouteDefs();renderAssignments();renderDayCheckboxes();}
+  else if(session.role==='driver'){renderMyPlan();}
+}
+
+/* ========== CONFIG ========== */
+function renderConfig(){
+  document.getElementById('driverList').innerHTML=state.drivers.map((d,i)=>`
+    <div class="form-row c3" style="margin-bottom:6px;">
+      <div style="grid-column:1/3;"><input value="${escapeHtml(d)}" onchange="state.drivers[${i}]=this.value;saveState();"></div>
+      <div><button class="btn del" onclick="if(!confirm('Usunąć kierowcę '+state.drivers[${i}]+'?'))return;state.drivers.splice(${i},1);saveState();renderAll();">usuń</button></div>
+    </div>`).join('');
+  document.getElementById('carList').innerHTML=state.cars.map((c,i)=>`
+    <div class="form-row c3" style="margin-bottom:6px;">
+      <div style="grid-column:1/3;"><input value="${escapeHtml(c)}" onchange="state.cars[${i}]=this.value;saveState();"></div>
+      <div><button class="btn del" onclick="if(!confirm('Usunąć auto '+state.cars[${i}]+'?'))return;state.cars.splice(${i},1);saveState();renderAll();">usuń</button></div>
+    </div>`).join('');
+}
+function addDriver(){state.drivers.push('Nowy kierowca');saveState();renderAll();}
+function addCar(){state.cars.push('Nowe auto');saveState();renderAll();}
+function renderDayCheckboxes(){
+  document.getElementById('dayCheckboxes').innerHTML=DAY_NAMES.map((name,i)=>`
+    <label style="font-size:13px;text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:5px;cursor:pointer;">
+      <input type="checkbox" ${state.activeDays.includes(i)?'checked':''} onchange="toggleDay(${i})"> ${name}
+    </label>`).join('');
+}
+function toggleDay(i){
+  if(state.activeDays.includes(i))state.activeDays=state.activeDays.filter(d=>d!==i);
+  else{state.activeDays.push(i);state.activeDays.sort();}
+  saveState();renderAll();
+}
+function changePin(){
+  const p1=document.getElementById('newPin').value,p2=document.getElementById('newPin2').value;
+  const err=document.getElementById('pinChangeErr');
+  if(p1.length<4){err.textContent='PIN musi mieć min. 4 znaki.';return;}
+  if(p1!==p2){err.textContent='PIN-y się nie zgadzają.';return;}
+  state.pin=p1;saveState();err.textContent='';
+  document.getElementById('newPin').value='';document.getElementById('newPin2').value='';
+  showToast('PIN zmieniony');
+}
+
+/* ========== EXPORT / IMPORT ========== */
+function exportData(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    state: state
+  };
+  const text = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const box = document.getElementById('exportBox');
+  box.value = text;
+  box.classList.remove('hidden');
+  document.getElementById('copyExportBtn').classList.remove('hidden');
+  box.select();
+}
+function copyExport(){
+  const box = document.getElementById('exportBox');
+  box.select();
+  document.execCommand('copy');
+  showToast('Skopiowano — wklej w polu importu na nowej stronie');
+}
+async function importData(){
+  const raw = document.getElementById('importBox').value.trim();
+  const err = document.getElementById('importErr');
+  if(!raw){ err.textContent = 'Wklej najpierw wyeksportowane dane.'; return; }
+  if(!confirm('To nadpisze obecne dane w tej aplikacji (trasy, kierowców, przypisania). Kontynuować?')) return;
+  try{
+    const decoded = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if(!decoded.state || !decoded.state.routes){ throw new Error('zły format'); }
+    state = {...state, ...decoded.state};
+    await saveState();
+    err.textContent = '';
+    document.getElementById('importBox').value = '';
+    showToast('Dane zaimportowane pomyślnie');
+    populateLoginDrivers();
+    renderAll();
+  }catch(e){
+    err.textContent = 'Nie udało się odczytać danych — sprawdź, czy skopiowano cały tekst.';
+  }
+}
+
+/* ========== ROUTE DEFS ========== */
+function renderRouteDefs(){
+  document.getElementById('routeDefs').innerHTML=state.routes.map((route,ri)=>{
+    const total=route.przystanki.length;
+    const stopsHtml=route.przystanki.map((s,si)=>`
+      <li style="flex-direction:column;align-items:stretch;gap:4px;">
+        <div class="stop-view-row" id="view-${s.id}">
+          <span class="stop-num">${si+1}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;">
+            ${s.numer?`<span class="chtag">${escapeHtml(s.numer)}</span>`:''}
+            <span class="stop-miejsc">${escapeHtml(s.miejscowosc)}</span>
+            ${s.notatki?`<span class="stop-note">— ${escapeHtml(s.notatki)}</span>`:''}
+          </div>
+          <div style="display:flex;gap:3px;flex-shrink:0;">
+            <button class="stop-order-btn" title="Wyżej" onclick="moveStop('${route.id}','${s.id}',-1)" ${si===0?'disabled':''}>▲</button>
+            <button class="stop-order-btn" title="Niżej" onclick="moveStop('${route.id}','${s.id}',1)" ${si===total-1?'disabled':''}>▼</button>
+            <button class="btn del" style="padding:2px 7px;font-size:11px;" title="Edytuj" onclick="toggleEditStop('${s.id}')">✎</button>
+            <button class="btn del" style="padding:2px 7px;font-size:11px;" title="Usuń" onclick="removeStop('${route.id}','${s.id}')">✕</button>
+          </div>
+        </div>
+        <div class="stop-edit-row" id="edit-${s.id}">
+          <input id="en-${s.id}" value="${escapeHtml(s.numer)}" placeholder="Nr chłodni" style="font-size:12px;padding:4px 6px;">
+          <input id="em-${s.id}" value="${escapeHtml(s.miejscowosc)}" placeholder="Miejscowość" style="font-size:12px;padding:4px 6px;" onkeydown="if(event.key==='Enter'){saveEditStop('${route.id}','${s.id}');}">
+          <button class="btn sm" style="padding:4px 8px;font-size:11px;" onclick="saveEditStop('${route.id}','${s.id}')">Zapisz</button>
+          <button class="btn del" style="padding:4px 8px;font-size:11px;" onclick="toggleEditStop('${s.id}')">Anuluj</button>
+        </div>
+      </li>`).join('');
+    return `
+    <div class="card" style="border-left:4px solid ${route.color};margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="rdot" style="background:${route.color};"></span>
+          <input value="${escapeHtml(route.nazwa)}" style="width:200px;font-weight:700;font-size:14px;" onchange="state.routes[${ri}].nazwa=this.value;saveState();">
+        </div>
+        <button class="btn del" onclick="removeRoute('${route.id}')">usuń trasę</button>
+      </div>
+      <ul class="stop-list">${stopsHtml||'<li style="color:var(--ink2);font-style:italic;">brak przystanków</li>'}</ul>
+      <div class="form-row c3" style="margin-top:8px;">
+        <div><input id="rs-num-${route.id}" placeholder="Nr chłodni"></div>
+        <div><input id="rs-mj-${route.id}" placeholder="Miejscowość" onkeydown="if(event.key==='Enter'){event.preventDefault();addStop('${route.id}');}"></div>
+        <div><button class="btn sm sec" onclick="addStop('${route.id}')">+ dodaj</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addRouteDef(){
+  const ci=state.routes.length%COLORS.length;
+  state.routes.push({id:uid(),nazwa:'Trasa '+(state.routes.length+1),color:COLORS[ci],przystanki:[]});
+  saveState();renderAll();
+}
+function removeRoute(id){
+  const r=state.routes.find(x=>x.id===id);
+  if(!confirm('Na pewno usunąć trasę "'+r.nazwa+'" wraz ze wszystkimi jej przystankami i przypisaniami?'))return;
+  state.routes=state.routes.filter(r=>r.id!==id);
+  state.assignments=state.assignments.filter(a=>a.routeId!==id);
+  saveState();renderAll();
+}
+function addStop(routeId){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const nEl=document.getElementById('rs-num-'+routeId);
+  const mEl=document.getElementById('rs-mj-'+routeId);
+  const mj=mEl.value.trim();if(!mj){mEl.focus();return;}
+  r.przystanki.push({id:uid(),numer:nEl.value.trim(),miejscowosc:mj,notatki:''});
+  nEl.value='';mEl.value='';
+  saveState();renderAll();
+  setTimeout(()=>{const el=document.getElementById('rs-num-'+routeId);if(el)el.focus();},0);
+}
+function removeStop(routeId,stopId){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const s=r.przystanki.find(x=>x.id===stopId);
+  if(!confirm('Usunąć chłodnię '+(s.numer?'['+s.numer+'] ':'')+s.miejscowosc+'?'))return;
+  r.przystanki=r.przystanki.filter(s=>s.id!==stopId);
+  saveState();renderAll();
+}
+function toggleEditStop(stopId){
+  const view=document.getElementById('view-'+stopId);
+  const edit=document.getElementById('edit-'+stopId);
+  if(!view||!edit)return;
+  const isOpen=edit.classList.contains('open');
+  edit.classList.toggle('open',!isOpen);
+  view.style.display=isOpen?'flex':'none';
+  if(!isOpen) setTimeout(()=>{const el=document.getElementById('en-'+stopId);if(el)el.focus();},0);
+}
+function saveEditStop(routeId,stopId){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const s=r.przystanki.find(x=>x.id===stopId);if(!s)return;
+  const numer=document.getElementById('en-'+stopId).value.trim();
+  const miejscowosc=document.getElementById('em-'+stopId).value.trim();
+  if(!miejscowosc)return;
+  s.numer=numer;s.miejscowosc=miejscowosc;
+  saveState();renderAll();
+}
+function moveStop(routeId,stopId,dir){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const idx=r.przystanki.findIndex(s=>s.id===stopId);
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=r.przystanki.length)return;
+  const tmp=r.przystanki[idx];
+  r.przystanki[idx]=r.przystanki[newIdx];
+  r.przystanki[newIdx]=tmp;
+  saveState();renderAll();
+}
+
+/* ========== WEEKLY ASSIGNMENTS ========== */
+function weekKey(){return isoDate(currentWeekStart);}
+function goThisWeek(){currentWeekStart=getMonday(new Date());renderAssignments();}
+function shiftWeek(dir){currentWeekStart=addDays(currentWeekStart,dir*7);renderAssignments();}
+
+function renderAssignments(){
+  const wk=weekKey();
+  const wkEnd=addDays(currentWeekStart,6);
+  document.getElementById('weekLabel').textContent=`${formatDate(wk)} — ${formatDate(isoDate(wkEnd))}`;
+  // reset share area
+  document.getElementById('shareText').classList.add('hidden');
+  document.getElementById('copyShareBtn').classList.add('hidden');
+
+  const container=document.getElementById('assignList');
+  if(state.routes.length===0){container.innerHTML='<div class="nothing">Zdefiniuj trasy w zakładce „Trasy i punkty".</div>';return;}
+
+  container.innerHTML=state.routes.map(route=>{
+    const summary=route.przystanki.map(s=>(s.numer?s.numer+' ':'')+s.miejscowosc).join(' → ');
+    const daysHtml=state.activeDays.map(dayIdx=>{
+      const dateStr=isoDate(addDays(currentWeekStart,dayIdx));
+      const existing=state.assignments.find(a=>a.weekStart===wk&&a.routeId===route.id&&a.day===dayIdx);
+      if(existing){
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--ink2);min-width:100px;">${DAY_NAMES[dayIdx]}<br><span style="font-size:10px;">${formatDate(dateStr)}</span></span>
+          <span class="assigned-tag">${escapeHtml(existing.driver)}</span>
+          <span style="font-size:12px;color:var(--ink2);">${escapeHtml(existing.car)}</span>
+          <button class="btn del" style="margin-left:auto;" onclick="removeAssignment('${existing.id}')">usuń</button>
+        </div>`;
+      }
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--ink2);min-width:100px;">${DAY_NAMES[dayIdx]}<br><span style="font-size:10px;">${formatDate(dateStr)}</span></span>
+        <select id="ad-${route.id}-${dayIdx}" style="width:auto;min-width:120px;">
+          <option value="">— kierowca —</option>
+          ${state.drivers.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+        </select>
+        <select id="ac-${route.id}-${dayIdx}" style="width:auto;min-width:100px;">
+          <option value="">— auto —</option>
+          ${state.cars.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
+        </select>
+        <button class="btn sm" onclick="assignRoute('${route.id}',${dayIdx})">Przypisz</button>
+      </div>`;
+    }).join('');
+
+    return `<div class="assign-card" style="border-left-color:${route.color};">
+      <div class="assign-head">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="rdot" style="background:${route.color};"></span>
+          <span class="rname">${escapeHtml(route.nazwa)}</span>
+          <span style="font-size:11px;color:var(--ink2);">(${route.przystanki.length} pkt)</span>
+        </div>
+      </div>
+      <div class="assign-stops-summary">${escapeHtml(summary)||'brak przystanków'}</div>
+      ${daysHtml}
+    </div>`;
+  }).join('');
+}
+
+function assignRoute(routeId,dayIdx){
+  const wk=weekKey();
+  const d=document.getElementById('ad-'+routeId+'-'+dayIdx);
+  const c=document.getElementById('ac-'+routeId+'-'+dayIdx);
+  if(!d.value||!c.value){showToast('Wybierz kierowcę i auto');return;}
+  state.assignments.push({id:uid(),weekStart:wk,routeId,day:dayIdx,driver:d.value,car:c.value});
+  saveState();renderAssignments();showToast('Przypisano');
+}
+function removeAssignment(id){
+  if(!confirm('Usunąć to przypisanie?'))return;
+  state.assignments=state.assignments.filter(a=>a.id!==id);
+  saveState();renderAssignments();
+}
+
+function copyWeek(){
+  const wk=weekKey();
+  const prevWk=isoDate(addDays(currentWeekStart,-7));
+  const prevAssignments=state.assignments.filter(a=>a.weekStart===prevWk);
+  if(prevAssignments.length===0){showToast('Brak przypisań w poprzednim tygodniu');return;}
+  const existingThisWeek=state.assignments.filter(a=>a.weekStart===wk);
+  let added=0;
+  prevAssignments.forEach(pa=>{
+    const exists=existingThisWeek.find(a=>a.routeId===pa.routeId&&a.day===pa.day);
+    if(!exists){
+      state.assignments.push({id:uid(),weekStart:wk,routeId:pa.routeId,day:pa.day,driver:pa.driver,car:pa.car});
+      added++;
+    }
+  });
+  if(added>0){saveState();renderAssignments();showToast(`Skopiowano ${added} przypisań`);}
+  else showToast('Wszystkie przypisania już istnieją');
+}
+
+/* ========== SHARE PLAN ========== */
+function generateShareText(){
+  const wk=weekKey();
+  const wkEnd=addDays(currentWeekStart,6);
+  const weekAssign=state.assignments.filter(a=>a.weekStart===wk).sort((a,b)=>a.day-b.day);
+
+  if(weekAssign.length===0){showToast('Brak przypisań na ten tydzień');return;}
+
+  // group by driver
+  const byDriver={};
+  weekAssign.forEach(a=>{
+    if(!byDriver[a.driver]) byDriver[a.driver]=[];
+    byDriver[a.driver].push(a);
+  });
+
+  let text=`📋 GRAFIK ODBIORU PRÓB Z CHŁODNI\n`;
+  text+=`Tydzień: ${formatDate(wk)} — ${formatDate(isoDate(wkEnd))}\n`;
+  text+=`PIW Słupsk\n`;
+  text+=`${'─'.repeat(35)}\n\n`;
+
+  Object.keys(byDriver).forEach(driver=>{
+    text+=`👤 ${driver}\n`;
+    byDriver[driver].forEach(a=>{
+      const route=state.routes.find(r=>r.id===a.routeId);
+      if(!route)return;
+      const dateStr=isoDate(addDays(currentWeekStart,a.day));
+      text+=`  ${DAY_NAMES[a.day]} ${formatDate(dateStr)}\n`;
+      text+=`  🚗 ${a.car} → ${route.nazwa}\n`;
+      route.przystanki.forEach((s,i)=>{
+        text+=`    ${i+1}. ${s.numer?'['+s.numer+'] ':''}${s.miejscowosc}\n`;
+      });
+      text+=`\n`;
+    });
+  });
+
+  const ta=document.getElementById('shareText');
+  ta.value=text;
+  ta.classList.remove('hidden');
+  document.getElementById('copyShareBtn').classList.remove('hidden');
+  ta.select();
+}
+
+function copyShareText(){
+  const ta=document.getElementById('shareText');
+  ta.select();
+  document.execCommand('copy');
+  showToast('Skopiowano do schowka!');
+}
+
+/* ========== DRIVER VIEW ========== */
+function shiftMyWeek(dir){
+  const el=document.getElementById('my-week');
+  const cur=getMonday(parseLocalDate(el.value));
+  el.value=isoDate(addDays(cur,dir*7));
+  renderMyPlan();
+}
+function renderMyPlan(){
+  const name=session.name;
+  const weekInput=document.getElementById('my-week');
+  if(!weekInput.value) weekInput.value=isoDate(getMonday(new Date()));
+  const wk=isoDate(getMonday(parseLocalDate(weekInput.value)));
+  const wkEnd=addDays(new Date(wk),6);
+  const container=document.getElementById('myPlanList');
+  const my=state.assignments.filter(a=>a.weekStart===wk&&a.driver===name).sort((a,b)=>a.day-b.day);
+  if(my.length===0){
+    container.innerHTML=`<div class="nothing">Brak przypisanych tras na tydzień ${formatDate(wk)} — ${formatDate(isoDate(wkEnd))}.</div>`;
+    return;
+  }
+  container.innerHTML=my.map(a=>{
+    const route=state.routes.find(r=>r.id===a.routeId);
+    if(!route)return'';
+    const dateStr=isoDate(addDays(parseLocalDate(a.weekStart),a.day));
+    const stopsHtml=route.przystanki.map((s,i)=>`
+      <li>
+        <span class="stop-num">${i+1}</span>
+        ${s.numer?`<span class="chtag">${escapeHtml(s.numer)}</span>`:''}
+        <span class="stop-miejsc">${escapeHtml(s.miejscowosc)}</span>
+        ${s.notatki?`<span class="stop-note">— ${escapeHtml(s.notatki)}</span>`:''}
+      </li>`).join('');
+    return `<div class="my-route" style="border-left-color:${route.color};">
+      <div class="day">${DAY_NAMES[a.day]}, ${formatDate(dateStr)}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span class="rdot" style="background:${route.color};"></span>
+        <span class="rname">${escapeHtml(route.nazwa)}</span>
+        <span style="font-size:12px;color:var(--ink2);">${escapeHtml(a.car)}</span>
+      </div>
+      <ul class="stop-list">${stopsHtml}</ul>
+    </div>`;
+  }).join('');
+}
+
+/* ========== INIT ========== */
+document.getElementById('my-week').value=isoDate(getMonday(new Date()));
+// Poczekaj aż Firebase będzie gotowe, potem załaduj dane
+function startApp() {
+  loadState();
+}
+if(window._fbReady) startApp();
+else window._fbReadyCb = startApp;
+</script>
+</body>
+</html>
