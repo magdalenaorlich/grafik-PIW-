@@ -280,8 +280,8 @@ let session={role:null,name:''};
 let currentWeekStart=getMonday(new Date());
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
-function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);dt.setHours(0,0,0,0);return dt;}
-function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function getMonday(d){const dt=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=dt.getDay();const diff=day===0?-6:1-day;dt.setDate(dt.getDate()+diff);return dt;}
+function addDays(d,n){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());r.setDate(r.getDate()+n);return r;}
 function isoDate(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
 function parseLocalDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d);}
 function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}.${m}.${y}`;}
@@ -769,7 +769,7 @@ function renderMyPlan(){
   container.innerHTML=my.map(a=>{
     const route=state.routes.find(r=>r.id===a.routeId);
     if(!route)return'';
-    const dateStr=isoDate(addDays(new Date(a.weekStart),a.day));
+    const dateStr=isoDate(addDays(parseLocalDate(a.weekStart),a.day));
     const stopsHtml=route.przystanki.map((s,i)=>`
       <li>
         <span class="stop-num">${i+1}</span>
