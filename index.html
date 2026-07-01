@@ -235,6 +235,41 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBx5QKIwsKoUo-O8rB934GkphivvLsX0UY",
+    authDomain: "grafik-piw.firebaseapp.com",
+    projectId: "grafik-piw",
+    storageBucket: "grafik-piw.firebasestorage.app",
+    messagingSenderId: "985411579408",
+    appId: "1:985411579408:web:c2788dd85bdbb54d146495"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window._fbGet = async function(key) {
+    try {
+      const snap = await getDoc(doc(db, 'grafik', key));
+      return snap.exists() ? snap.data().value : null;
+    } catch(e) { return null; }
+  };
+
+  window._fbSet = async function(key, value) {
+    try {
+      await setDoc(doc(db, 'grafik', key), { value });
+      return true;
+    } catch(e) { return false; }
+  };
+
+  window._fbReady = true;
+  if(window._fbReadyCb) window._fbReadyCb();
+</script>
+
 <script>
 const COLORS=['#0f6e64','#7c3aed','#be185d','#b45309','#1d4ed8','#059669','#dc2626','#6d28d9'];
 const DAY_NAMES=['Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota','Niedziela'];
@@ -252,20 +287,32 @@ function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-/* ========== STORAGE LAYER ========== */
+/* ========== STORAGE LAYER (Firebase + localStorage fallback) ========== */
+function waitForFb(cb) {
+  if(window._fbReady) cb();
+  else window._fbReadyCb = cb;
+}
+
 const storage = {
   async get(key) {
-    // try Claude artifact storage first, fall back to localStorage
-    if(window.storage && typeof window.storage.get === 'function'){
-      try{ const r=await window.storage.get(key,true); return r?r.value:null; }catch(e){ return null; }
-    }
-    try{ return localStorage.getItem('piw_'+key); }catch(e){ return null; }
+    return new Promise(resolve => {
+      waitForFb(async () => {
+        try {
+          const val = await window._fbGet(key);
+          if(val !== null) { resolve(val); return; }
+        } catch(e) {}
+        try { resolve(localStorage.getItem('piw_'+key)); } catch(e) { resolve(null); }
+      });
+    });
   },
   async set(key, value) {
-    if(window.storage && typeof window.storage.set === 'function'){
-      try{ await window.storage.set(key,value,true); return; }catch(e){}
-    }
-    try{ localStorage.setItem('piw_'+key, value); }catch(e){}
+    return new Promise(resolve => {
+      waitForFb(async () => {
+        try { await window._fbSet(key, value); } catch(e) {}
+        try { localStorage.setItem('piw_'+key, value); } catch(e) {}
+        resolve();
+      });
+    });
   }
 };
 
@@ -743,7 +790,12 @@ function renderMyPlan(){
 
 /* ========== INIT ========== */
 document.getElementById('my-week').value=isoDate(getMonday(new Date()));
-loadState();
+// Poczekaj aż Firebase będzie gotowe, potem załaduj dane
+function startApp() {
+  loadState();
+}
+if(window._fbReady) startApp();
+else window._fbReadyCb = startApp;
 </script>
 </body>
 </html>
