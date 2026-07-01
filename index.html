@@ -274,10 +274,23 @@ async function loadState(){
     const raw=await storage.get('state');
     if(raw) state={...state,...JSON.parse(raw)};
     else{
-      state.drivers=['Agata Łabenda','Joanna Fir','Klaudia Guzowska','Jacek Machoń','Żaneta Święty','Magdalena Orlich'];
-      state.cars=['Toyota','Ford','SsangYong','Hyundai','Isuzu'];
+      state.drivers=[
+'Agata Łabenda',
+'Joanna Fir',
+'Klaudia Guzowska',
+'Jacek Machoń',
+'Żaneta Święty',
+'Magdalena Orlich'
+      ];
+      state.cars=[
+'Toyota',
+'Ford',
+'SsangYong',
+'Hyundai',
+'Isuzu'
+      ];
       state.routes=[
-        {id:uid(),nazwa:'Łupawa - Stara Dąbrowa',color:COLORS[0],przystanki:[
+        {id:uid(),nazwa:'Łupawa - Stara Dąbrowa',color:'#0f6e64',przystanki:[
           {id:uid(),numer:'CH2212001',miejscowosc:'Łupawa 12C',notatki:''},
           {id:uid(),numer:'CH2212002',miejscowosc:'Łupawa 12C',notatki:''},
           {id:uid(),numer:'CH2212003',miejscowosc:'Kolonia Stara Dąbrowa 39',notatki:''},
@@ -285,45 +298,59 @@ async function loadState(){
           {id:uid(),numer:'CH2212010',miejscowosc:'Łysomiczki 1',notatki:''},
           {id:uid(),numer:'CH2212011',miejscowosc:'Łysomiczki 1',notatki:''},
           {id:uid(),numer:'CH2212012',miejscowosc:'Żarkowo, ul. Lipowa 1',notatki:''},
-          {id:uid(),numer:'CH2212019',miejscowosc:'Głobino, ul. Malinowa',notatki:''}
+          {id:uid(),numer:'CH2212019',miejscowosc:'Głobino, ul. Malinowa',notatki:''},
+          {id:uid(),numer:'CH2212015',miejscowosc:'Dargacz 1',notatki:''}
         ]},
-        {id:uid(),nazwa:'Długa',color:COLORS[1],przystanki:[
+        {id:uid(),nazwa:'Długa',color:'#7c3aed',przystanki:[
           {id:uid(),numer:'CH2212005',miejscowosc:'Główczyce 3D',notatki:''},
           {id:uid(),numer:'CH2212006',miejscowosc:'Pobłocie 15',notatki:''},
           {id:uid(),numer:'CH2212007',miejscowosc:'Rzuszcze 33',notatki:''},
           {id:uid(),numer:'CH2212008',miejscowosc:'Smołdzino 48/7',notatki:''},
           {id:uid(),numer:'CH2212009',miejscowosc:'Skórzyno 18',notatki:''},
-          {id:uid(),numer:'CH2212015',miejscowosc:'Dargacz 1',notatki:''},
-          {id:uid(),numer:'CH2212022',miejscowosc:'Machowinko 21',notatki:''},
           {id:uid(),numer:'CH2212024',miejscowosc:'Lubuczewo 19',notatki:''},
           {id:uid(),numer:'CH2212026',miejscowosc:'Niewierowo 12',notatki:''},
           {id:uid(),numer:'CH2212028',miejscowosc:'Żelkowo 20',notatki:''},
           {id:uid(),numer:'CH2212031',miejscowosc:'Skórzyno 18',notatki:''},
-          {id:uid(),numer:'CH2212032',miejscowosc:'Objazda, ul. Lipowa 23H',notatki:''}
+          {id:uid(),numer:'CH2212032',miejscowosc:'Objazda, ul. Lipowa 23H',notatki:''},
+          {id:uid(),numer:'CH2212013',miejscowosc:'Smołdzino 48/7',notatki:''}
         ]},
-        {id:uid(),nazwa:'Kępice',color:COLORS[2],przystanki:[
+        {id:uid(),nazwa:'Kępice',color:'#be185d',przystanki:[
           {id:uid(),numer:'CH2212014',miejscowosc:'Warcino 10',notatki:''},
           {id:uid(),numer:'CH2212016',miejscowosc:'Kawka 4',notatki:''},
           {id:uid(),numer:'CH2212017',miejscowosc:'Kawka 4',notatki:''},
           {id:uid(),numer:'CH2212018',miejscowosc:'Zagórki 6',notatki:''},
           {id:uid(),numer:'CH2212023',miejscowosc:'Kruszyna 29',notatki:''}
         ]},
-        {id:uid(),nazwa:'Modła - Jaracza',color:COLORS[3],przystanki:[
+        {id:uid(),nazwa:'Modła - Jaracza',color:'#b45309',przystanki:[
           {id:uid(),numer:'CH2212020',miejscowosc:'Modła 8',notatki:''},
           {id:uid(),numer:'CH2212021',miejscowosc:'Modła 13',notatki:''},
           {id:uid(),numer:'CH2212025',miejscowosc:'Gałęzinowo, ul. Główna 38',notatki:''},
-          {id:uid(),numer:'CH2212030',miejscowosc:'Słupsk, ul. Jaracza 25A',notatki:''}
+          {id:uid(),numer:'CH2212030',miejscowosc:'Słupsk, ul. Jaracza 25A',notatki:''},
+          {id:uid(),numer:'CH2212022',miejscowosc:'Machowinko 21',notatki:''}
         ]}
       ];
-      state.pin='';
+      state.pin='22122026';
+      state.activeDays=[0];
     }
   }catch(e){
-    state.drivers=['Agata Łabenda','Joanna Fir','Klaudia Guzowska','Jacek Machoń','Żaneta Święty','Magdalena Orlich'];
-    state.cars=['Toyota','Ford','SsangYong','Hyundai','Isuzu'];
+    state.drivers=[
+'Agata Łabenda',
+'Joanna Fir',
+'Klaudia Guzowska',
+'Jacek Machoń',
+'Żaneta Święty',
+'Magdalena Orlich'
+    ];
+    state.cars=[
+'Toyota',
+'Ford',
+'SsangYong',
+'Hyundai',
+'Isuzu'
+    ];
   }
   populateLoginDrivers();
 }
-
 async function saveState(){
   await storage.set('state', JSON.stringify(state));
 }
