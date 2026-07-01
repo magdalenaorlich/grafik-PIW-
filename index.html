@@ -63,12 +63,17 @@
   .rdot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;}
   .rname{font-weight:700;font-size:14px;}
   .stop-list{list-style:none;margin:6px 0 0;padding:0;}
-  .stop-list li{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .stop-list li{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12px;}
   .stop-list li:last-child{border-bottom:none;}
   .stop-num{font-family:var(--mono);color:#fff;background:var(--ink2);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
   .chtag{font-family:var(--mono);background:var(--teal2);color:#fff;padding:1px 6px;border-radius:3px;font-size:10px;white-space:nowrap;}
   .stop-miejsc{font-weight:600;}
   .stop-note{color:var(--ink2);font-size:11px;}
+  .stop-order-btn{background:none;border:1px solid var(--line);border-radius:3px;color:var(--ink2);cursor:pointer;font-size:10px;padding:1px 4px;line-height:1.4;}
+  .stop-order-btn:hover{background:var(--line);}
+  .stop-edit-row{display:none;grid-template-columns:1fr 1.4fr 60px auto;gap:6px;padding:4px 0;align-items:center;}
+  .stop-edit-row.open{display:grid;}
+  .stop-view-row{display:flex;align-items:center;gap:6px;flex:1;}
 
   .week-nav{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
   .week-label{font-family:var(--mono);font-size:13px;font-weight:700;}
@@ -607,6 +612,34 @@ function addStop(routeId){
 function removeStop(routeId,stopId){
   const r=state.routes.find(x=>x.id===routeId);if(!r)return;
   r.przystanki=r.przystanki.filter(s=>s.id!==stopId);
+  saveState();renderAll();
+}
+function toggleEditStop(stopId){
+  const view=document.getElementById('view-'+stopId);
+  const edit=document.getElementById('edit-'+stopId);
+  if(!view||!edit)return;
+  const isOpen=edit.classList.contains('open');
+  edit.classList.toggle('open',!isOpen);
+  view.style.display=isOpen?'flex':'none';
+  if(!isOpen) setTimeout(()=>{const el=document.getElementById('en-'+stopId);if(el)el.focus();},0);
+}
+function saveEditStop(routeId,stopId){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const s=r.przystanki.find(x=>x.id===stopId);if(!s)return;
+  const numer=document.getElementById('en-'+stopId).value.trim();
+  const miejscowosc=document.getElementById('em-'+stopId).value.trim();
+  if(!miejscowosc)return;
+  s.numer=numer;s.miejscowosc=miejscowosc;
+  saveState();renderAll();
+}
+function moveStop(routeId,stopId,dir){
+  const r=state.routes.find(x=>x.id===routeId);if(!r)return;
+  const idx=r.przystanki.findIndex(s=>s.id===stopId);
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=r.przystanki.length)return;
+  const tmp=r.przystanki[idx];
+  r.przystanki[idx]=r.przystanki[newIdx];
+  r.przystanki[newIdx]=tmp;
   saveState();renderAll();
 }
 
