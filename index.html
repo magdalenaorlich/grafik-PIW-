@@ -282,7 +282,8 @@ let currentWeekStart=getMonday(new Date());
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);dt.setHours(0,0,0,0);return dt;}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
-function isoDate(d){return d.toISOString().slice(0,10);}
+function isoDate(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
+function parseLocalDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d);}
 function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}.${m}.${y}`;}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
@@ -749,7 +750,7 @@ function copyShareText(){
 /* ========== DRIVER VIEW ========== */
 function shiftMyWeek(dir){
   const el=document.getElementById('my-week');
-  const cur=getMonday(new Date(el.value));
+  const cur=getMonday(parseLocalDate(el.value));
   el.value=isoDate(addDays(cur,dir*7));
   renderMyPlan();
 }
@@ -757,7 +758,7 @@ function renderMyPlan(){
   const name=session.name;
   const weekInput=document.getElementById('my-week');
   if(!weekInput.value) weekInput.value=isoDate(getMonday(new Date()));
-  const wk=isoDate(getMonday(new Date(weekInput.value)));
+  const wk=isoDate(getMonday(parseLocalDate(weekInput.value)));
   const wkEnd=addDays(new Date(wk),6);
   const container=document.getElementById('myPlanList');
   const my=state.assignments.filter(a=>a.weekStart===wk&&a.driver===name).sort((a,b)=>a.day-b.day);
